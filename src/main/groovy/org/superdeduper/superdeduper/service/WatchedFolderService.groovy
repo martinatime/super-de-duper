@@ -26,8 +26,7 @@ class WatchedFolderService {
         if (!watchedFolderOptional.present) {
             File file = fileService.getFile(path)
             if (fileService.isDirectory(file)) {
-                FileTime lastUpdate = FileTime.fromMillis(file.lastModified())
-                WatchedFolder watchedFolder = new WatchedFolder(path: Paths.get(path), lastUpdate: lastUpdate)
+                WatchedFolder watchedFolder = new WatchedFolder(path: Paths.get(path), lastUpdate: file.lastModified())
                 watchedFolderRepository.save(watchedFolder)
             }
         }

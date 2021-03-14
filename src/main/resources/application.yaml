@@ -9,7 +9,6 @@ spring:
 logging:
    level:
      org.superdeduper.superdeduper: DEBUG
-     org.springframework.data.mongodb.core.MongoTemplate: DEBUG
 
 app:
   name: Super De-duper

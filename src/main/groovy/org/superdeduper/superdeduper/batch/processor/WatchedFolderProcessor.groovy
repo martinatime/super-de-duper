@@ -15,7 +15,7 @@ import java.nio.file.Paths
 import java.nio.file.attribute.FileTime
 
 class WatchedFolderProcessor implements ItemProcessor<WatchedFolder, WatchedFolder> {
-    static final Logger log = LoggerFactory.getLogger(WatchedFolderProcessor.class);
+    static final Logger log = LoggerFactory.getLogger(WatchedFolderProcessor.class)
 
     @Autowired
     FileService fileService
@@ -29,16 +29,15 @@ class WatchedFolderProcessor implements ItemProcessor<WatchedFolder, WatchedFold
     WatchedFolder process(@NonNull WatchedFolder item) throws Exception {
         Path watchedFolderPath = Paths.get(item.path)
         File folder = fileService.getFileByPath(watchedFolderPath)
-        FileTime fileTime = FileTime.fromMillis(folder.lastModified())
-        item.updated = fileTime <=> item.lastUpdate
-        if (fileService.isDirectory(folder)) {
-            List<File> subFolders = processDirectory(item, folder)
-            while(!subFolders.isEmpty()) {
-                List<File> working = subFolders.clone()
-                subFolders.clear()
-                working.each {
-                    subFolders.addAll(processDirectory(item, it))
-                }
+        long lastUpdate = folder.lastModified()
+        item.updated = lastUpdate <=> item.lastUpdate
+
+        List<File> subFolders = processDirectory(item, folder)
+        while (!subFolders.isEmpty()) {
+            List<File> working = (List<File>)subFolders.clone()
+            subFolders.clear()
+            working.each {
+                subFolders.addAll(processDirectory(item, it))
             }
         }
         item.musicFiles = musicFiles

@@ -13,7 +13,7 @@ class WatchedFolder {
 
     String path
 
-    FileTime lastUpdate
+    Long lastUpdate
 
     @Transient
     List<MusicFile> musicFiles = []
