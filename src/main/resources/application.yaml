@@ -14,3 +14,9 @@ app:
   name: Super De-duper
   destination: c:\\temp\${app.name}\\destination
   temp: c:\\temp\\${app.name}\\temp
+
+file-watcher:
+  watched-folder: "D:\\Watched Folder"
+  staging-folder: "D:\\Staging Folder"
+  pollInterval: 20000
+  quietPeriod: 5000

@@ -1,6 +1,6 @@
 package org.superdeduper.superdeduper.service
 
-import lombok.extern.slf4j.Slf4j
+import groovy.util.logging.Slf4j
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -11,9 +11,9 @@ import org.superdeduper.superdeduper.repository.MusicFileRepository
 import java.nio.file.Files
 import java.nio.file.Path
 
+@Slf4j
 @Service
 class MusicFileService {
-    static final Logger log = LoggerFactory.getLogger(MusicFileService);
 
     @Autowired
     MusicFileRepository musicFileRepository

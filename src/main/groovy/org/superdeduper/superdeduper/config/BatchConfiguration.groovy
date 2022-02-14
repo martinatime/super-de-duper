@@ -1,5 +1,6 @@
 package org.superdeduper.superdeduper.config
 
+import groovy.util.logging.Slf4j
 import org.springframework.batch.core.Job
 import org.springframework.batch.core.JobParameters
 import org.springframework.batch.core.JobParametersBuilder
@@ -10,25 +11,19 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.core.configuration.annotation.StepScope
 import org.springframework.batch.core.launch.JobLauncher
 import org.springframework.batch.core.launch.support.RunIdIncrementer
-import org.springframework.batch.item.ItemWriter
-import org.springframework.batch.item.data.MongoItemReader
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.scheduling.annotation.Scheduled
-import org.superdeduper.superdeduper.batch.listener.MusicFilePopulationProcessingStepListener
-import org.superdeduper.superdeduper.batch.listener.WatchedFolderProcessingJobListener
-import org.superdeduper.superdeduper.batch.listener.WatchedFolderProcessingStepListener
-import org.superdeduper.superdeduper.batch.processor.MusicFilePopulationProcessor
-import org.superdeduper.superdeduper.batch.reader.MusicFileReader
-import org.superdeduper.superdeduper.batch.writer.MusicFileWriter
-import org.superdeduper.superdeduper.batch.writer.WatchedFolderWriter
-import org.superdeduper.superdeduper.model.MusicFile
-import org.superdeduper.superdeduper.model.WatchedFolder
-import org.superdeduper.superdeduper.batch.processor.WatchedFolderProcessor
-import org.superdeduper.superdeduper.batch.reader.WatchedFolderReader
+import org.superdeduper.superdeduper.batch.processor.StageFileChecksumProcessor
+import org.superdeduper.superdeduper.batch.processor.StageFileProcessor
+import org.superdeduper.superdeduper.batch.reader.StageFileChecksumReader
+import org.superdeduper.superdeduper.batch.reader.StageFileReader
+import org.superdeduper.superdeduper.batch.writer.StageFileWriter
+import org.superdeduper.superdeduper.model.TrackedFile
 
+@Slf4j
 @Configuration
 @EnableBatchProcessing
 class BatchConfiguration {
@@ -42,15 +37,6 @@ class BatchConfiguration {
     StepBuilderFactory stepBuilderFactory
 
     @Autowired
-    WatchedFolderProcessingJobListener watchedFolderProcessingListener
-
-    @Autowired
-    WatchedFolderProcessingStepListener watchedFolderProcessingStepListener
-
-    @Autowired
-    MusicFilePopulationProcessingStepListener musicFilePopulationProcessingStepListener
-
-    @Autowired
     MongoTemplate mongoTemplate
 
     @Scheduled(initialDelay = 5000L, fixedDelay = 60000L)
@@ -58,44 +44,75 @@ class BatchConfiguration {
         JobParameters jobParameters = new JobParametersBuilder()
                 .addLong("JobID", System.currentTimeMillis())
                 .toJobParameters()
-        jobLauncher.run(processWatchedFolders(), jobParameters)
+        jobLauncher.run(stageFiles(), jobParameters)
     }
 
-    Job processWatchedFolders() {
-        jobBuilderFactory.get("processWatchedFolders")
-                .incrementer(new RunIdIncrementer())
-                .listener(watchedFolderProcessingListener)
-                .start(processEachWatchedFolderStep())
-                .next(musicFilePopulationStep())
-                .build()
+    Job stageFiles() {
+        jobBuilderFactory.get("processStageFiles")
+            .incrementer(new RunIdIncrementer())
+            .start(processEachIntakeTrackedFileStep())
+            .next(processEachStagedTrackedFileForChecksumStep())
+            .build()
     }
 
     @Bean
-    Step processEachWatchedFolderStep() {
-        stepBuilderFactory.get("processEachWatchedFolderStep")
-                .listener(watchedFolderProcessingStepListener)
-                .<WatchedFolder, WatchedFolder> chunk(10)
-                .reader(watchFolderReader())
-                .processor(watchedFolderProcessor())
-                .writer(watchedFolderWriter())
+    Step processEachIntakeTrackedFileStep() {
+        stepBuilderFactory.get("processEachIntakeTrackedFileStep")
+            .<TrackedFile, TrackedFile> chunk(10)
+            .reader(stageFileReader())
+            .processor(stageFileProcessor())
+            .writer(stageFileWriter())
+            .build()
+    }
+
+    @Bean
+    @StepScope
+    StageFileReader stageFileReader() {
+        new StageFileReader(mongoTemplate)
+    }
+
+    @Bean
+    StageFileProcessor stageFileProcessor() {
+        new StageFileProcessor()
+    }
+
+    @Bean
+    StageFileWriter stageFileWriter() {
+        new StageFileWriter(template: mongoTemplate)
+    }
+
+    @Bean
+    Step processEachStagedTrackedFileForChecksumStep() {
+        stepBuilderFactory.get("processEachStagedTrackedFileForChecksumStep")
+                .<TrackedFile, TrackedFile> chunk(10)
+                .reader(stageFileChecksumReader())
+                .processor(StageFileChecksumProcessor())
+                .writer(stageFileWriter())
                 .build()
     }
 
     @Bean
     @StepScope
-    WatchedFolderReader watchFolderReader() {
-        new WatchedFolderReader(mongoTemplate)
+    StageFileChecksumReader stageFileChecksumReader() {
+        new StageFileChecksumReader(mongoTemplate)
     }
 
     @Bean
-    WatchedFolderProcessor watchedFolderProcessor() {
-        new WatchedFolderProcessor()
+    StageFileChecksumProcessor StageFileChecksumProcessor() {
+        new StageFileChecksumProcessor()
     }
 
-    @Bean
-    WatchedFolderWriter watchedFolderWriter() {
-        new WatchedFolderWriter()
+
+    /*
+
+    Job processWatchedFolders() {
+        jobBuilderFactory.get("processWatchedFolders")
+                .incrementer(new RunIdIncrementer())
+                .listener(watchedFolderProcessingListener)
+                .next(musicFilePopulationStep())
+                .build()
     }
+
 
     @Bean
     Step musicFilePopulationStep() {
@@ -123,4 +140,5 @@ class BatchConfiguration {
     MusicFileWriter musicFileWriter() {
         new MusicFileWriter(template: mongoTemplate);
     }
+     */
 }

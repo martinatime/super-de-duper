@@ -1,6 +1,6 @@
 plugins {
-	id 'org.springframework.boot' version '2.4.3'
-	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+	id 'org.springframework.boot' version "${springBootVersion}"
+	id 'io.spring.dependency-management' version "${springDependencyMgmtVersion}"
 	id 'groovy'
 }
 
@@ -13,25 +13,24 @@ repositories {
 }
 
 dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-devtools'
+	implementation 'org.codehaus.groovy:groovy'
+
+	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 	implementation 'org.springframework.boot:spring-boot-starter-batch'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+	implementation "com.mpatric:mp3agic:${mp3agicVersion}"
+
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	implementation 'org.codehaus.groovy:groovy-all:3.0.7'
-	implementation 'org.codehaus.groovy:groovy:3.0.7'
-	implementation 'com.mpatric:mp3agic:0.9.1'
-
-	implementation 'org.projectlombok:lombok:1.18.16'
-	annotationProcessor 'org.projectlombok:lombok:1.18.16'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.batch:spring-batch-test'
-	testImplementation platform("org.spockframework:spock-bom:2.0-M4-groovy-3.0")
-	testImplementation 'org.spockframework:spock-core:2.0-M4-groovy-3.0'
 
-	testCompileOnly 'org.projectlombok:lombok:1.18.16'
-	testAnnotationProcessor 'org.projectlombok:lombok:1.18.16'
+	testImplementation platform("org.spockframework:spock-bom:${spockBomVersion}")
+	testImplementation 'org.spockframework:spock-core'
 
 	runtimeOnly 'org.hsqldb:hsqldb'
 }
